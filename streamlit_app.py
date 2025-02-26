@@ -143,7 +143,7 @@ elif action == "Update Existing Vendor":
                 conn.update(worksheet="Vendors", data=updated_df)
                 st.success("Vendor details successfully updated!")
 
-# View All Vendors
+# View All Vendors 
 elif action == "View All Vendors":
     st.dataframe(existing_data)
 
