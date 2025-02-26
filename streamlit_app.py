@@ -56,7 +56,7 @@ if action == "Onboard New Vendor":
         if submit_button:
             if not company_name or not business_type:
                 st.warning("Ensure all mandatory fields are filled.")
-            elif existing_data["CompanyName"].str.contains(company_name).any():
+            elif existing_data["CompanyName"].astype(str).str.contains(company_name, na=False).any():
                 st.warning("A vendor with this company name already exists.")
             else:
                 vendor_data = pd.DataFrame(
