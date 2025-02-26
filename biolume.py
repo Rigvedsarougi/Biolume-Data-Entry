@@ -179,7 +179,14 @@ if st.button("Generate Invoice"):
         # Submit Invoice Details button
         if st.button("Submit Invoice Details"):
             try:
+                # Establish Google Sheets connection
                 conn = st.connection("gsheets", type=GSheetsConnection)
+                
+                # Fetch existing invoice data
+                existing_data = conn.read(worksheet="Invoices", usecols=list(range(16)), ttl=5)
+                existing_data = existing_data.dropna(how="all")
+
+                # Create new invoice data
                 invoice_data = pd.DataFrame(
                     [
                         {
@@ -201,9 +208,11 @@ if st.button("Generate Invoice"):
                         }
                     ]
                 )
-                st.write("Invoice Data to be saved:", invoice_data)  # Debugging
-                existing_data = conn.read(worksheet="Invoices", usecols=list(range(16)), ttl=5)
+                
+                # Combine existing and new data
                 updated_df = pd.concat([existing_data, invoice_data], ignore_index=True)
+                
+                # Update Google Sheets
                 conn.update(worksheet="Invoices", data=updated_df)
                 st.success("Invoice details successfully submitted to Google Sheets!")
             except Exception as e:
