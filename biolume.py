@@ -172,40 +172,41 @@ if st.button("Generate Invoice"):
         pdf_file = f"invoice_{customer_name}_{datetime.now().strftime('%Y%m%d%H%M%S')}.pdf"
         pdf.output(pdf_file)
 
-        # Store invoice details in Google Sheets
-        try:
-            conn = st.connection("gsheets", type=GSheetsConnection)
-            invoice_data = pd.DataFrame(
-                [
-                    {
-                        "InvoiceID": pdf_file,
-                        "InvoiceDate": datetime.now().strftime("%Y-%m-%d"),
-                        "EmployeeName": selected_employee,
-                        "CustomerName": customer_name,
-                        "GSTNumber": gst_number,
-                        "ContactNumber": contact_number,
-                        "Address": address,
-                        "Products": ", ".join(selected_products),
-                        "Quantities": ", ".join(map(str, quantities)),
-                        "DiscountCategory": discount_category,
-                        "Subtotal": subtotal,
-                        "CGST": tax_amount / 2,
-                        "SGST": tax_amount / 2,
-                        "GrandTotal": grand_total,
-                        "PDFFileName": pdf_file,
-                    }
-                ]
-            )
-            st.write("Invoice Data to be saved:", invoice_data)  # Debugging
-            existing_data = conn.read(worksheet="Invoices", usecols=list(range(16)), ttl=5)
-            updated_df = pd.concat([existing_data, invoice_data], ignore_index=True)
-            conn.update(worksheet="Invoices", data=updated_df)
-            st.success("Invoice details saved to Google Sheets!")
-        except Exception as e:
-            st.error(f"Error saving to Google Sheets: {e}")
-
         # Download PDF
         with open(pdf_file, "rb") as f:
             st.download_button("Download Invoice", f, file_name=pdf_file)
+
+        # Submit Invoice Details button
+        if st.button("Submit Invoice Details"):
+            try:
+                conn = st.connection("gsheets", type=GSheetsConnection)
+                invoice_data = pd.DataFrame(
+                    [
+                        {
+                            "InvoiceID": pdf_file,
+                            "InvoiceDate": datetime.now().strftime("%Y-%m-%d"),
+                            "EmployeeName": selected_employee,
+                            "CustomerName": customer_name,
+                            "GSTNumber": gst_number,
+                            "ContactNumber": contact_number,
+                            "Address": address,
+                            "Products": ", ".join(selected_products),
+                            "Quantities": ", ".join(map(str, quantities)),
+                            "DiscountCategory": discount_category,
+                            "Subtotal": subtotal,
+                            "CGST": tax_amount / 2,
+                            "SGST": tax_amount / 2,
+                            "GrandTotal": grand_total,
+                            "PDFFileName": pdf_file,
+                        }
+                    ]
+                )
+                st.write("Invoice Data to be saved:", invoice_data)  # Debugging
+                existing_data = conn.read(worksheet="Invoices", usecols=list(range(16)), ttl=5)
+                updated_df = pd.concat([existing_data, invoice_data], ignore_index=True)
+                conn.update(worksheet="Invoices", data=updated_df)
+                st.success("Invoice details successfully submitted to Google Sheets!")
+            except Exception as e:
+                st.error(f"Error saving to Google Sheets: {e}")
     else:
         st.error("Please fill all fields and select products.")
