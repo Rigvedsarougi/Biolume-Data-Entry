@@ -6,3 +6,5 @@ google-auth
 pandas
 fpdf
 pandas
+PyPDF2
+pdfplumber
