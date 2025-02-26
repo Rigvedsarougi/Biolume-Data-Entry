@@ -4,12 +4,6 @@ from google.oauth2.service_account import Credentials
 import pandas as pd
 
 
-def get_gspread_client():
-    creds = Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
-    client = gspread.authorize(creds)
-    return client
-
-# Function to append data to Google Sheet
 def append_to_gsheet(data):
     client = get_gspread_client()
     sheet = client.open("Your Google Sheet Name").sheet1  # Replace with your sheet name
