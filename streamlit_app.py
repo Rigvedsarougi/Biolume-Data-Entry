@@ -78,11 +78,19 @@ class PDF(FPDF):
 
 # Function to log sales data to Google Sheets
 def log_sales_to_gsheet(conn, sales_data):
-    existing_sales_data = conn.read(worksheet="Sales", usecols=list(range(len(SALES_SHEET_COLUMNS))), ttl=5)
-    existing_sales_data = existing_sales_data.dropna(how="all")
-    
-    updated_sales_data = pd.concat([existing_sales_data, sales_data], ignore_index=True)
-    conn.update(worksheet="Sales", data=updated_sales_data)
+    try:
+        # Fetch existing data
+        existing_sales_data = conn.read(worksheet="Sales", usecols=list(range(len(SALES_SHEET_COLUMNS))), ttl=5)
+        existing_sales_data = existing_sales_data.dropna(how="all")
+        
+        # Combine existing data with new data
+        updated_sales_data = pd.concat([existing_sales_data, sales_data], ignore_index=True)
+        
+        # Update the Google Sheet
+        conn.update(worksheet="Sales", data=updated_sales_data)
+        st.success("Sales data successfully logged to Google Sheets!")
+    except Exception as e:
+        st.error(f"Error logging sales data: {e}")
 
 # Generate Invoice
 def generate_invoice(customer_name, gst_number, contact_number, address, selected_products, quantities, discount_category, employee_name):
