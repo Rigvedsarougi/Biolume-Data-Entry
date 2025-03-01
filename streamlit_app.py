@@ -84,11 +84,17 @@ class PDF(FPDF):
         self.ln(1)
 
 # Function to log sales data to Google Sheets
+# Function to log sales data to Google Sheets
 def log_sales_to_gsheet(conn, sales_data):
     try:
         # Fetch existing data
-        existing_sales_data = conn.read(worksheet="Sales", usecols=list(range(len(SALES_SHEET_COLUMNS))), ttl=5)
+        existing_sales_data = conn.read(worksheet="Sales", ttl=5)
         existing_sales_data = existing_sales_data.dropna(how="all")
+        
+        # Ensure the existing data has all the required columns
+        for column in SALES_SHEET_COLUMNS:
+            if column not in existing_sales_data.columns:
+                existing_sales_data[column] = None  # Add missing columns with default value None
         
         # Combine existing data with new data
         updated_sales_data = pd.concat([existing_sales_data, sales_data], ignore_index=True)
