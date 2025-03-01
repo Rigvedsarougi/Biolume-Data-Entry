@@ -11,8 +11,6 @@ st.title("Biolume: Sales Management System")
 # Constants
 SALES_SHEET_COLUMNS = [
     "Invoice Date",
-    "Invoice Time",
-    "Invoice File Name",
     "Employee Name",
     "Employee Code",
     "Designation",
@@ -33,10 +31,7 @@ SALES_SHEET_COLUMNS = [
     "SGST Amount",
     "Grand Total",
     "Overall Discount (%)",
-    "Discounted Price",
-    "Amount-wise Discount (%)",
-    "Payment Status",
-    "Amount Paid"
+    "Discounted Price"
 ]
 
 # Establishing a Google Sheets connection
@@ -84,17 +79,11 @@ class PDF(FPDF):
         self.ln(1)
 
 # Function to log sales data to Google Sheets
-# Function to log sales data to Google Sheets
 def log_sales_to_gsheet(conn, sales_data):
     try:
         # Fetch existing data
-        existing_sales_data = conn.read(worksheet="Sales", ttl=5)
+        existing_sales_data = conn.read(worksheet="Sales", usecols=list(range(len(SALES_SHEET_COLUMNS))), ttl=5)
         existing_sales_data = existing_sales_data.dropna(how="all")
-        
-        # Ensure the existing data has all the required columns
-        for column in SALES_SHEET_COLUMNS:
-            if column not in existing_sales_data.columns:
-                existing_sales_data[column] = None  # Add missing columns with default value None
         
         # Combine existing data with new data
         updated_sales_data = pd.concat([existing_sales_data, sales_data], ignore_index=True)
@@ -106,13 +95,11 @@ def log_sales_to_gsheet(conn, sales_data):
         st.error(f"Error logging sales data: {e}")
 
 # Generate Invoice
-def generate_invoice(customer_name, gst_number, contact_number, address, selected_products, quantities, discount_category, employee_name, overall_discount, amount_wise_discount, payment_status, amount_paid):
+def generate_invoice(customer_name, gst_number, contact_number, address, selected_products, quantities, discount_category, employee_name, overall_discount):
     pdf = PDF()
     pdf.alias_nb_pages()
     pdf.add_page()
     current_date = datetime.now().strftime("%d-%m-%Y")
-    current_time = datetime.now().strftime("%H:%M:%S")
-    invoice_file_name = f"invoice_{customer_name}_{datetime.now().strftime('%Y%m%d%H%M%S')}.pdf"
 
     # Sales Person
     pdf.ln(0)
@@ -173,8 +160,6 @@ def generate_invoice(customer_name, gst_number, contact_number, address, selecte
         # Prepare sales data for logging
         sales_data.append({
             "Invoice Date": current_date,
-            "Invoice Time": current_time,
-            "Invoice File Name": invoice_file_name,
             "Employee Name": employee_name,
             "Employee Code": Person[Person['Employee Name'] == employee_name]['Employee Code'].values[0],
             "Designation": Person[Person['Employee Name'] == employee_name]['Designation'].values[0],
@@ -195,10 +180,7 @@ def generate_invoice(customer_name, gst_number, contact_number, address, selecte
             "SGST Amount": item_total_price * 0.09,
             "Grand Total": item_total_price * 1.18,
             "Overall Discount (%)": overall_discount,
-            "Discounted Price": discounted_price,
-            "Amount-wise Discount (%)": amount_wise_discount,
-            "Payment Status": payment_status,
-            "Amount Paid": amount_paid
+            "Discounted Price": discounted_price
         })
 
     # Tax and Grand Total
@@ -254,17 +236,6 @@ if selected_products:
 st.subheader("Overall Discount")
 overall_discount = st.number_input("Enter Overall Discount (%)", min_value=0.0, max_value=100.0, value=0.0, step=0.1)
 
-# Amount-wise Discount
-st.subheader("Amount-wise Discount")
-amount_wise_discount = st.number_input("Enter Amount-wise Discount (%)", min_value=0.0, max_value=100.0, value=0.0, step=0.1)
-
-# Payment Status
-st.subheader("Payment Status")
-payment_status = st.selectbox("Select Payment Status", ["Done", "Pending", "Partial"])
-amount_paid = 0.0
-if payment_status == "Partial":
-    amount_paid = st.number_input("Enter Amount Paid", min_value=0.0, value=0.0, step=0.1)
-
 # Outlet Selection
 st.subheader("Outlet Details")
 outlet_names = Outlet['Shop Name'].tolist()
@@ -281,7 +252,7 @@ if st.button("Generate Invoice"):
         contact_number = outlet_details['Contact']
         address = outlet_details['Address']
 
-        pdf = generate_invoice(customer_name, gst_number, contact_number, address, selected_products, quantities, discount_category, selected_employee, overall_discount, amount_wise_discount, payment_status, amount_paid)
+        pdf = generate_invoice(customer_name, gst_number, contact_number, address, selected_products, quantities, discount_category, selected_employee, overall_discount)
         pdf_file = f"invoice_{customer_name}_{datetime.now().strftime('%Y%m%d%H%M%S')}.pdf"
         pdf.output(pdf_file)
         with open(pdf_file, "rb") as f:
