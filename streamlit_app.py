@@ -6,7 +6,7 @@ from fpdf import FPDF
 from datetime import datetime
 
 # Display Title and Description
-st.title("Biolume + ALLGEN TRADING: Billing System")
+st.title("Biolume: Sales Management System")
 
 # Constants
 SALES_SHEET_COLUMNS = [
