@@ -11,15 +11,18 @@ st.title("Biolume Skin Science Sales Management System")
 # Constants
 SALES_SHEET_COLUMNS = [
     "Invoice Date",
-    "Employee Name",
-    "Employee Code",
-    "Designation",
+    "Firm Name",
+    "Distributor ID",
     "Discount Category",
-    "Outlet Name",
-    "Outlet Contact",
-    "Outlet Address",
-    "Outlet State",
-    "Outlet City",
+    "Point of Sales",
+    "Type",
+    "Territory",
+    "State",
+    "Email ID",
+    "Contact Person",
+    "Contact Number",
+    "Address",
+    "Sales Person",
     "Product ID",
     "Product Name",
     "Product Category",
@@ -29,7 +32,8 @@ SALES_SHEET_COLUMNS = [
     "GST Rate",
     "CGST Amount",
     "SGST Amount",
-    "Grand Total"
+    "Grand Total",
+    "Transaction Type"  # New column for Sold, Return, Add On
 ]
 
 # Establishing a Google Sheets connection
@@ -38,7 +42,7 @@ conn = st.connection("gsheets", type=GSheetsConnection)
 # Load data
 Products = pd.read_csv('Invoice - Products.csv')
 Outlet = pd.read_csv('Invoice - Outlet.csv')
-Person = pd.read_csv('Invoice - Person.csv')
+Distributor = pd.read_csv('Invoice - Distributors.csv')
 
 # Company Details
 company_name = "BIOLUME SKIN SCIENCE PRIVATE LIMITED"
@@ -93,16 +97,16 @@ def log_sales_to_gsheet(conn, sales_data):
         st.error(f"Error logging sales data: {e}")
 
 # Generate Invoice
-def generate_invoice(customer_name, gst_number, contact_number, address, selected_products, quantities, discount_category, employee_name):
+def generate_invoice(customer_name, gst_number, contact_number, address, selected_products, quantities, discount_category, firm_name, transaction_type):
     pdf = PDF()
     pdf.alias_nb_pages()
     pdf.add_page()
     current_date = datetime.now().strftime("%d-%m-%Y")
 
-    # Sales Person
+    # Firm Name
     pdf.ln(0)
     pdf.set_font("Arial", 'B', 10)
-    pdf.cell(0, 10, f"Sales Person: {employee_name}", ln=True, align='L')
+    pdf.cell(0, 10, f"Firm Name: {firm_name}", ln=True, align='L')
     pdf.ln(0)
 
     # Customer details
@@ -156,15 +160,18 @@ def generate_invoice(customer_name, gst_number, contact_number, address, selecte
         # Prepare sales data for logging
         sales_data.append({
             "Invoice Date": current_date,
-            "Employee Name": employee_name,
-            "Employee Code": Person[Person['Employee Name'] == employee_name]['Employee Code'].values[0],
-            "Designation": Person[Person['Employee Name'] == employee_name]['Designation'].values[0],
+            "Firm Name": firm_name,
+            "Distributor ID": Distributor[Distributor['Firm Name'] == firm_name]['Distributor ID'].values[0],
             "Discount Category": discount_category,
-            "Outlet Name": customer_name,
-            "Outlet Contact": contact_number,
-            "Outlet Address": address,
-            "Outlet State": Outlet[Outlet['Shop Name'] == customer_name]['State'].values[0],
-            "Outlet City": Outlet[Outlet['Shop Name'] == customer_name]['City'].values[0],
+            "Point of Sales": Distributor[Distributor['Firm Name'] == firm_name]['Point of Sales'].values[0],
+            "Type": Distributor[Distributor['Firm Name'] == firm_name]['Type'].values[0],
+            "Territory": Distributor[Distributor['Firm Name'] == firm_name]['Territory'].values[0],
+            "State": Distributor[Distributor['Firm Name'] == firm_name]['State'].values[0],
+            "Email ID": Distributor[Distributor['Firm Name'] == firm_name]['Email ID'].values[0],
+            "Contact Person": Distributor[Distributor['Firm Name'] == firm_name]['Contact Person'].values[0],
+            "Contact Number": Distributor[Distributor['Firm Name'] == firm_name]['Contact Number'].values[0],
+            "Address": Distributor[Distributor['Firm Name'] == firm_name]['Address'].values[0],
+            "Sales Person": Distributor[Distributor['Firm Name'] == firm_name]['Sales Person'].values[0],
             "Product ID": product_data['Product ID'],
             "Product Name": product,
             "Product Category": product_data['Product Category'],
@@ -174,7 +181,8 @@ def generate_invoice(customer_name, gst_number, contact_number, address, selecte
             "GST Rate": "18%",
             "CGST Amount": item_total_price * 0.09,
             "SGST Amount": item_total_price * 0.09,
-            "Grand Total": item_total_price * 1.18
+            "Grand Total": item_total_price * 1.18,
+            "Transaction Type": transaction_type
         })
 
     # Tax and Grand Total
@@ -206,13 +214,22 @@ def generate_invoice(customer_name, gst_number, contact_number, address, selecte
 # Streamlit UI
 st.title(" ")
 
-# Employee Selection
-st.subheader("Employee Details")
-employee_names = Person['Employee Name'].tolist()
-selected_employee = st.selectbox("Select Employee", employee_names)
+# Firm Name Selection
+st.subheader("Distributor Details")
+firm_names = Distributor['Firm Name'].tolist()
+selected_firm = st.selectbox("Select Firm Name", firm_names)
 
-# Fetch Discount Category
-discount_category = Person[Person['Employee Name'] == selected_employee]['Discount Category'].values[0]
+# Passkey System
+distributor_id = st.text_input("Enter Distributor ID")
+if distributor_id != Distributor[Distributor['Firm Name'] == selected_firm]['Distributor ID'].values[0]:
+    st.error("Invalid Distributor ID")
+    st.stop()
+
+# Fetch Distributor Details
+distributor_details = Distributor[Distributor['Firm Name'] == selected_firm].iloc[0]
+
+# Transaction Type
+transaction_type = st.selectbox("Transaction Type", ["Sold", "Return", "Add On"])
 
 # Product Selection
 st.subheader("Product Details")
@@ -236,13 +253,13 @@ outlet_details = Outlet[Outlet['Shop Name'] == selected_outlet].iloc[0]
 
 # Generate Invoice button
 if st.button("Generate Invoice"):
-    if selected_employee and selected_products and selected_outlet:
+    if selected_firm and selected_products and selected_outlet:
         customer_name = selected_outlet
         gst_number = outlet_details['GST']
         contact_number = outlet_details['Contact']
         address = outlet_details['Address']
 
-        pdf = generate_invoice(customer_name, gst_number, contact_number, address, selected_products, quantities, discount_category, selected_employee)
+        pdf = generate_invoice(customer_name, gst_number, contact_number, address, selected_products, quantities, distributor_details['Discount Category'], selected_firm, transaction_type)
         pdf_file = f"invoice_{customer_name}_{datetime.now().strftime('%Y%m%d%H%M%S')}.pdf"
         pdf.output(pdf_file)
         with open(pdf_file, "rb") as f:
