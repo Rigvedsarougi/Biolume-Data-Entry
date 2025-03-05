@@ -109,10 +109,11 @@ def generate_invoice(customer_name, gst_number, contact_number, address, selecte
     pdf.cell(0, 10, f"Firm Name: {firm_name}", ln=True, align='L')
     pdf.ln(0)
 
-    # Transaction Type
-    pdf.set_font("Arial", 'B', 10)
-    pdf.cell(0, 10, f"Transaction Type: {transaction_type}", ln=True, align='L')
-    pdf.ln(5)
+    # Transaction Type (only for non-"Sold" transactions)
+    if transaction_type != "Sold":
+        pdf.set_font("Arial", 'B', 10)
+        pdf.cell(0, 10, f"Transaction Type: {transaction_type}", ln=True, align='L')
+        pdf.ln(5)
 
     # Customer details
     pdf.set_font("Arial", 'B', 12)
@@ -233,9 +234,14 @@ selected_firm = st.selectbox("Select Firm Name", firm_names)
 
 # Passkey System
 distributor_id = st.text_input("Enter Distributor ID")
-if distributor_id != Distributor[Distributor['Firm Name'] == selected_firm]['Distributor ID'].values[0]:
-    st.error("Invalid Distributor ID")
-    st.stop()
+done_button = st.button("Done")
+
+if done_button:
+    if distributor_id == Distributor[Distributor['Firm Name'] == selected_firm]['Distributor ID'].values[0]:
+        st.success("Distributor ID verified!")
+    else:
+        st.error("Invalid Distributor ID")
+        st.stop()
 
 # Fetch Distributor Details
 distributor_details = Distributor[Distributor['Firm Name'] == selected_firm].iloc[0]
