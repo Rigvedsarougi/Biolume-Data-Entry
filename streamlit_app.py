@@ -234,7 +234,7 @@ selected_firm = st.selectbox("Select Firm Name", firm_names)
 
 # Passkey System
 distributor_id = st.text_input("Enter Your Password")
-done_button = st.button("Done")
+done_button = st.button("Log In")
 
 # Initialize session state for ID validation
 if 'id_validated' not in st.session_state:
