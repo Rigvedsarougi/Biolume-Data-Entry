@@ -266,7 +266,7 @@ if st.session_state.id_validated:
 
     # Display each product with a quantity input field
     for product in product_names:
-        quantities[product] = st.number_input(f"Quantity for {product}", min_value=0, value=0, step=1)
+        quantities[product] = st.number_input(f" {product}", min_value=0, value=0, step=1)
 
     # Filter out products with zero quantity
     selected_products = [product for product, qty in quantities.items() if qty > 0]
