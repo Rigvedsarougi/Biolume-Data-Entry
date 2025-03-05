@@ -236,54 +236,62 @@ selected_firm = st.selectbox("Select Firm Name", firm_names)
 distributor_id = st.text_input("Enter Distributor ID")
 done_button = st.button("Done")
 
+# Initialize session state for ID validation
+if 'id_validated' not in st.session_state:
+    st.session_state.id_validated = False
+
+# Validate Distributor ID
 if done_button:
     if distributor_id == Distributor[Distributor['Firm Name'] == selected_firm]['Distributor ID'].values[0]:
+        st.session_state.id_validated = True
         st.success("Distributor ID verified!")
     else:
         st.error("Invalid Distributor ID")
-        st.stop()
+        st.session_state.id_validated = False
 
-# Fetch Distributor Details
-distributor_details = Distributor[Distributor['Firm Name'] == selected_firm].iloc[0]
+# Only show the rest of the form if the ID is validated
+if st.session_state.id_validated:
+    # Fetch Distributor Details
+    distributor_details = Distributor[Distributor['Firm Name'] == selected_firm].iloc[0]
 
-# Transaction Type
-transaction_type = st.selectbox("Transaction Type", ["Sold", "Return", "Add On", "Damage", "Expired"])
+    # Transaction Type
+    transaction_type = st.selectbox("Transaction Type", ["Sold", "Return", "Add On", "Damage", "Expired"])
 
-# Product Selection
-st.subheader("Product Details")
-product_names = Products['Product Name'].tolist()
+    # Product Selection
+    st.subheader("Product Details")
+    product_names = Products['Product Name'].tolist()
 
-# Create a dictionary to store quantities for each product
-quantities = {}
+    # Create a dictionary to store quantities for each product
+    quantities = {}
 
-# Display each product with a quantity input field
-for product in product_names:
-    quantities[product] = st.number_input(f"Quantity for {product}", min_value=0, value=0, step=1)
+    # Display each product with a quantity input field
+    for product in product_names:
+        quantities[product] = st.number_input(f"Quantity for {product}", min_value=0, value=0, step=1)
 
-# Filter out products with zero quantity
-selected_products = [product for product, qty in quantities.items() if qty > 0]
-quantities = [quantities[product] for product in selected_products]
+    # Filter out products with zero quantity
+    selected_products = [product for product, qty in quantities.items() if qty > 0]
+    quantities = [quantities[product] for product in selected_products]
 
-# Outlet Selection
-st.subheader("Outlet Details")
-outlet_names = Outlet['Shop Name'].tolist()
-selected_outlet = st.selectbox("Select Outlet", outlet_names)
+    # Outlet Selection
+    st.subheader("Outlet Details")
+    outlet_names = Outlet['Shop Name'].tolist()
+    selected_outlet = st.selectbox("Select Outlet", outlet_names)
 
-# Fetch Outlet Details
-outlet_details = Outlet[Outlet['Shop Name'] == selected_outlet].iloc[0]
+    # Fetch Outlet Details
+    outlet_details = Outlet[Outlet['Shop Name'] == selected_outlet].iloc[0]
 
-# Generate Invoice button
-if st.button("Generate Invoice"):
-    if selected_firm and selected_products and selected_outlet:
-        customer_name = selected_outlet
-        gst_number = outlet_details['GST']
-        contact_number = outlet_details['Contact']
-        address = outlet_details['Address']
+    # Generate Invoice button
+    if st.button("Generate Invoice"):
+        if selected_firm and selected_products and selected_outlet:
+            customer_name = selected_outlet
+            gst_number = outlet_details['GST']
+            contact_number = outlet_details['Contact']
+            address = outlet_details['Address']
 
-        pdf = generate_invoice(customer_name, gst_number, contact_number, address, selected_products, quantities, distributor_details['Discount Category'], selected_firm, transaction_type)
-        pdf_file = f"invoice_{customer_name}_{datetime.now().strftime('%Y%m%d%H%M%S')}.pdf"
-        pdf.output(pdf_file)
-        with open(pdf_file, "rb") as f:
-            st.download_button("Download Invoice", f, file_name=pdf_file)
-    else:
-        st.error("Please fill all fields and select products.")
+            pdf = generate_invoice(customer_name, gst_number, contact_number, address, selected_products, quantities, distributor_details['Discount Category'], selected_firm, transaction_type)
+            pdf_file = f"invoice_{customer_name}_{datetime.now().strftime('%Y%m%d%H%M%S')}.pdf"
+            pdf.output(pdf_file)
+            with open(pdf_file, "rb") as f:
+                st.download_button("Download Invoice", f, file_name=pdf_file)
+        else:
+            st.error("Please fill all fields and select products.")
