@@ -5,8 +5,46 @@ import math
 from fpdf import FPDF
 from datetime import datetime
 
+# Custom CSS for purple-white theme
+st.markdown(
+    """
+    <style>
+    .stApp {
+        background-color: #F5F5F5;
+        color: #4B0082;
+    }
+    .stButton>button {
+        background-color: #4B0082;
+        color: white;
+        border-radius: 5px;
+        padding: 10px 20px;
+        font-size: 16px;
+    }
+    .stSelectbox, .stTextInput, .stNumberInput {
+        background-color: white;
+        color: #4B0082;
+        border-radius: 5px;
+    }
+    .stHeader {
+        color: #4B0082;
+    }
+    .stSuccess {
+        color: #4B0082;
+    }
+    .stError {
+        color: #FF0000;
+    }
+    .stMarkdown {
+        color: #4B0082;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 # Display Title and Description
 st.title("Biolume Skin Science Sales Management System")
+st.markdown("Welcome to the Biolume Skin Science Sales Management System. Manage your sales, generate invoices, and track transactions seamlessly.")
 
 # Constants
 SALES_SHEET_COLUMNS = [
