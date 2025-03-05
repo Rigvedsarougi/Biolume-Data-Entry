@@ -33,7 +33,7 @@ SALES_SHEET_COLUMNS = [
     "CGST Amount",
     "SGST Amount",
     "Grand Total",
-    "Transaction Type"  # New column for Sold, Return, Add On
+    "Transaction Type"  # New column for Sold, Return, Add On, Damage, Expired
 ]
 
 # Establishing a Google Sheets connection
@@ -108,6 +108,11 @@ def generate_invoice(customer_name, gst_number, contact_number, address, selecte
     pdf.set_font("Arial", 'B', 10)
     pdf.cell(0, 10, f"Firm Name: {firm_name}", ln=True, align='L')
     pdf.ln(0)
+
+    # Transaction Type
+    pdf.set_font("Arial", 'B', 10)
+    pdf.cell(0, 10, f"Transaction Type: {transaction_type}", ln=True, align='L')
+    pdf.ln(5)
 
     # Customer details
     pdf.set_font("Arial", 'B', 12)
@@ -185,25 +190,32 @@ def generate_invoice(customer_name, gst_number, contact_number, address, selecte
             "Transaction Type": transaction_type
         })
 
-    # Tax and Grand Total
-    pdf.ln(10)
-    tax_rate = 0.18
-    tax_amount = total_price * tax_rate
-    grand_total = math.ceil(total_price + tax_amount)
+    # Tax and Grand Total (only for "Sold" transactions)
+    if transaction_type == "Sold":
+        pdf.ln(10)
+        tax_rate = 0.18
+        tax_amount = total_price * tax_rate
+        grand_total = math.ceil(total_price + tax_amount)
 
-    pdf.set_font("Arial", 'B', 10)
-    pdf.cell(160, 10, "Subtotal", border=0, align='R')
-    pdf.cell(30, 10, f"{total_price:.2f}", border=1, align='R')
-    pdf.ln()
-    pdf.cell(160, 10, "CGST (9%)", border=0, align='R')
-    pdf.cell(30, 10, f"{tax_amount / 2:.2f}", border=1, align='R')
-    pdf.ln()
-    pdf.cell(160, 10, "SGST (9%)", border=0, align='R')
-    pdf.cell(30, 10, f"{tax_amount / 2:.2f}", border=1, align='R')
-    pdf.ln()
-    pdf.cell(160, 10, "Grand Total", border=0, align='R')
-    pdf.cell(30, 10, f"{grand_total} INR", border=1, align='R', fill=True)
-    pdf.ln(20)
+        pdf.set_font("Arial", 'B', 10)
+        pdf.cell(160, 10, "Subtotal", border=0, align='R')
+        pdf.cell(30, 10, f"{total_price:.2f}", border=1, align='R')
+        pdf.ln()
+        pdf.cell(160, 10, "CGST (9%)", border=0, align='R')
+        pdf.cell(30, 10, f"{tax_amount / 2:.2f}", border=1, align='R')
+        pdf.ln()
+        pdf.cell(160, 10, "SGST (9%)", border=0, align='R')
+        pdf.cell(30, 10, f"{tax_amount / 2:.2f}", border=1, align='R')
+        pdf.ln()
+        pdf.cell(160, 10, "Grand Total", border=0, align='R')
+        pdf.cell(30, 10, f"{grand_total} INR", border=1, align='R', fill=True)
+        pdf.ln(20)
+    else:
+        # For non-"Sold" transactions, display a message
+        pdf.ln(10)
+        pdf.set_font("Arial", 'B', 12)
+        pdf.cell(0, 10, f"Transaction Type: {transaction_type}", ln=True, align='C')
+        pdf.ln(10)
 
     # Log sales data to Google Sheets
     sales_df = pd.DataFrame(sales_data)
@@ -222,14 +234,14 @@ selected_firm = st.selectbox("Select Firm Name", firm_names)
 # Passkey System
 distributor_id = st.text_input("Enter Distributor ID")
 if distributor_id != Distributor[Distributor['Firm Name'] == selected_firm]['Distributor ID'].values[0]:
-    st.error("Enter Your Password")
+    st.error("Invalid Distributor ID")
     st.stop()
 
 # Fetch Distributor Details
 distributor_details = Distributor[Distributor['Firm Name'] == selected_firm].iloc[0]
 
 # Transaction Type
-transaction_type = st.selectbox("Transaction Type", ["Sold", "Return", "Add On"])
+transaction_type = st.selectbox("Transaction Type", ["Sold", "Return", "Add On", "Damage", "Expired"])
 
 # Product Selection
 st.subheader("Product Details")
