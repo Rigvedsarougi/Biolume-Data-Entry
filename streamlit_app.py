@@ -6,7 +6,7 @@ from fpdf import FPDF
 from datetime import datetime
 
 # Display Title and Description
-st.title("Biolume: Sales Management System")
+st.title("Biolume Skin Science Sales Management System")
 
 # Constants
 SALES_SHEET_COLUMNS = [
@@ -29,9 +29,7 @@ SALES_SHEET_COLUMNS = [
     "GST Rate",
     "CGST Amount",
     "SGST Amount",
-    "Grand Total",
-    "Overall Discount (%)",
-    "Discounted Price"
+    "Grand Total"
 ]
 
 # Establishing a Google Sheets connection
@@ -95,7 +93,7 @@ def log_sales_to_gsheet(conn, sales_data):
         st.error(f"Error logging sales data: {e}")
 
 # Generate Invoice
-def generate_invoice(customer_name, gst_number, contact_number, address, selected_products, quantities, discount_category, employee_name, overall_discount):
+def generate_invoice(customer_name, gst_number, contact_number, address, selected_products, quantities, discount_category, employee_name):
     pdf = PDF()
     pdf.alias_nb_pages()
     pdf.add_page()
@@ -143,16 +141,14 @@ def generate_invoice(customer_name, gst_number, contact_number, address, selecte
         else:
             unit_price = float(product_data['Price'])
 
-        # Apply overall discount
-        discounted_price = unit_price * (1 - overall_discount / 100)
-        item_total_price = discounted_price * quantity
+        item_total_price = unit_price * quantity
 
         pdf.cell(10, 8, str(idx + 1), border=1)
         pdf.cell(70, 8, product, border=1)
         pdf.cell(20, 8, "3304", border=1, align='C')
         pdf.cell(20, 8, "18%", border=1, align='C')
         pdf.cell(20, 8, str(quantity), border=1, align='C')
-        pdf.cell(25, 8, f"{discounted_price:.2f}", border=1, align='R')
+        pdf.cell(25, 8, f"{unit_price:.2f}", border=1, align='R')
         pdf.cell(25, 8, f"{item_total_price:.2f}", border=1, align='R')
         total_price += item_total_price
         pdf.ln()
@@ -178,9 +174,7 @@ def generate_invoice(customer_name, gst_number, contact_number, address, selecte
             "GST Rate": "18%",
             "CGST Amount": item_total_price * 0.09,
             "SGST Amount": item_total_price * 0.09,
-            "Grand Total": item_total_price * 1.18,
-            "Overall Discount (%)": overall_discount,
-            "Discounted Price": discounted_price
+            "Grand Total": item_total_price * 1.18
         })
 
     # Tax and Grand Total
@@ -210,7 +204,7 @@ def generate_invoice(customer_name, gst_number, contact_number, address, selecte
     return pdf
 
 # Streamlit UI
-st.title("")
+st.title(" ")
 
 # Employee Selection
 st.subheader("Employee Details")
@@ -232,10 +226,6 @@ if selected_products:
         qty = st.number_input(f"Quantity for {product}", min_value=1, value=1, step=1)
         quantities.append(qty)
 
-# Overall Discount
-st.subheader("Overall Discount")
-overall_discount = st.number_input("Enter Overall Discount (%)", min_value=0.0, max_value=100.0, value=0.0, step=0.1)
-
 # Outlet Selection
 st.subheader("Outlet Details")
 outlet_names = Outlet['Shop Name'].tolist()
@@ -252,7 +242,7 @@ if st.button("Generate Invoice"):
         contact_number = outlet_details['Contact']
         address = outlet_details['Address']
 
-        pdf = generate_invoice(customer_name, gst_number, contact_number, address, selected_products, quantities, discount_category, selected_employee, overall_discount)
+        pdf = generate_invoice(customer_name, gst_number, contact_number, address, selected_products, quantities, discount_category, selected_employee)
         pdf_file = f"invoice_{customer_name}_{datetime.now().strftime('%Y%m%d%H%M%S')}.pdf"
         pdf.output(pdf_file)
         with open(pdf_file, "rb") as f:
