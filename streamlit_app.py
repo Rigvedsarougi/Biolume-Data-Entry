@@ -234,14 +234,17 @@ transaction_type = st.selectbox("Transaction Type", ["Sold", "Return", "Add On"]
 # Product Selection
 st.subheader("Product Details")
 product_names = Products['Product Name'].tolist()
-selected_products = st.multiselect("Select Products", product_names)
 
-# Input Quantities for Each Selected Product
-quantities = []
-if selected_products:
-    for product in selected_products:
-        qty = st.number_input(f"Quantity for {product}", min_value=1, value=1, step=1)
-        quantities.append(qty)
+# Create a dictionary to store quantities for each product
+quantities = {}
+
+# Display each product with a quantity input field
+for product in product_names:
+    quantities[product] = st.number_input(f"Quantity for {product}", min_value=0, value=0, step=1)
+
+# Filter out products with zero quantity
+selected_products = [product for product, qty in quantities.items() if qty > 0]
+quantities = [quantities[product] for product in selected_products]
 
 # Outlet Selection
 st.subheader("Outlet Details")
