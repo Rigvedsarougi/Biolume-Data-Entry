@@ -222,7 +222,7 @@ selected_firm = st.selectbox("Select Firm Name", firm_names)
 # Passkey System
 distributor_id = st.text_input("Enter Distributor ID")
 if distributor_id != Distributor[Distributor['Firm Name'] == selected_firm]['Distributor ID'].values[0]:
-    st.error("Invalid Distributor ID")
+    st.error("Enter Your Password")
     st.stop()
 
 # Fetch Distributor Details
