@@ -233,7 +233,7 @@ firm_names = Distributor['Firm Name'].tolist()
 selected_firm = st.selectbox("Select Firm Name", firm_names)
 
 # Passkey System
-distributor_id = st.text_input("Enter Distributor ID")
+distributor_id = st.text_input("Enter Your Password")
 done_button = st.button("Done")
 
 # Initialize session state for ID validation
@@ -246,7 +246,7 @@ if done_button:
         st.session_state.id_validated = True
         st.success("Distributor ID verified!")
     else:
-        st.error("Invalid Distributor ID")
+        st.error("Invalid Password")
         st.session_state.id_validated = False
 
 # Only show the rest of the form if the ID is validated
