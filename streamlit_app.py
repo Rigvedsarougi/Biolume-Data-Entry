@@ -8,7 +8,6 @@ from datetime import datetime
 # Display Title and Description
 st.title("Biolume Skin Science Sales Management System")
 
-
 # Constants
 SALES_SHEET_COLUMNS = [
     "Invoice Date",
@@ -34,7 +33,13 @@ SALES_SHEET_COLUMNS = [
     "CGST Amount",
     "SGST Amount",
     "Grand Total",
-    "Transaction Type"  # New column for Sold, Return, Add On, Damage, Expired
+    "Transaction Type",  # New column for Sold, Return, Add On, Damage, Expired
+    "Shop Name",  # Outlet Details
+    "Outlet Address",  # Outlet Details
+    "Outlet Contact",  # Outlet Details
+    "Outlet State",  # Outlet Details
+    "Outlet City",  # Outlet Details
+    "Outlet GST"  # Outlet Details
 ]
 
 # Establishing a Google Sheets connection
@@ -104,6 +109,9 @@ def generate_invoice(customer_name, gst_number, contact_number, address, selecte
     pdf.add_page()
     current_date = datetime.now().strftime("%d-%m-%Y")
 
+    # Fetch Outlet Details
+    outlet_details = Outlet[Outlet['Shop Name'] == customer_name].iloc[0]
+
     # Firm Name
     pdf.ln(0)
     pdf.set_font("Arial", 'B', 10)
@@ -127,7 +135,7 @@ def generate_invoice(customer_name, gst_number, contact_number, address, selecte
     pdf.cell(100, 6, "Address: ", ln=True)
     pdf.multi_cell(0, 6, address)
     pdf.ln(1)
-    
+
     # Table header
     pdf.set_fill_color(200, 220, 255)
     pdf.set_font("Arial", 'B', 10)
@@ -189,7 +197,13 @@ def generate_invoice(customer_name, gst_number, contact_number, address, selecte
             "CGST Amount": item_total_price * 0.09,
             "SGST Amount": item_total_price * 0.09,
             "Grand Total": item_total_price * 1.18,
-            "Transaction Type": transaction_type
+            "Transaction Type": transaction_type,
+            "Shop Name": outlet_details['Shop Name'],  # Outlet Details
+            "Outlet Address": outlet_details['Address'],  # Outlet Details
+            "Outlet Contact": outlet_details['Contact'],  # Outlet Details
+            "Outlet State": outlet_details['State'],  # Outlet Details
+            "Outlet City": outlet_details['City'],  # Outlet Details
+            "Outlet GST": outlet_details['GST']  # Outlet Details
         })
 
     # Tax and Grand Total (only for "Sold" transactions)
@@ -278,16 +292,13 @@ if st.session_state.id_validated:
     outlet_names = Outlet['Shop Name'].tolist()
     selected_outlet = st.selectbox("Select Outlet", outlet_names)
 
-    # Fetch Outlet Details
-    outlet_details = Outlet[Outlet['Shop Name'] == selected_outlet].iloc[0]
-
     # Generate Invoice button
     if st.button("Generate Invoice"):
         if selected_firm and selected_products and selected_outlet:
             customer_name = selected_outlet
-            gst_number = outlet_details['GST']
-            contact_number = outlet_details['Contact']
-            address = outlet_details['Address']
+            gst_number = Outlet[Outlet['Shop Name'] == selected_outlet]['GST'].values[0]
+            contact_number = Outlet[Outlet['Shop Name'] == selected_outlet]['Contact'].values[0]
+            address = Outlet[Outlet['Shop Name'] == selected_outlet]['Address'].values[0]
 
             pdf = generate_invoice(customer_name, gst_number, contact_number, address, selected_products, quantities, distributor_details['Discount Category'], selected_firm, transaction_type)
             pdf_file = f"invoice_{customer_name}_{datetime.now().strftime('%Y%m%d%H%M%S')}.pdf"
