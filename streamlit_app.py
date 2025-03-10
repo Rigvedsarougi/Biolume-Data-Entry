@@ -5,6 +5,19 @@ import math
 from fpdf import FPDF
 from datetime import datetime
 
+# Hide GitHub and Fork links
+st.set_page_config(
+    page_title="Biolume Skin Science Sales Management System",
+    page_icon="",  # Optional: Add a custom icon
+    layout="wide",
+    menu_items={
+        'Get Help': None,  # Remove the "Get Help" link
+        'Report a bug': None,  # Remove the "Report a bug" link
+        'About': None  # Remove the "About" link
+    }
+)
+
+# Display Title and Description
 # Display Title and Description
 st.title("Biolume Skin Science Sales Management System")
 
