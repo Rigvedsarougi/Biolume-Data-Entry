@@ -8,15 +8,6 @@ from datetime import datetime
 # Display Title and Description
 st.title("Biolume Skin Science Sales Management System")
 
-# Add custom CSS to hide the GitHub icon
-hide_github_icon = """
-#GithubIcon {
-  visibility: hidden;
-}
-"""
-st.markdown(hide_github_icon, unsafe_allow_html=True)
-
-# Your app code goes here
 
 # Constants
 SALES_SHEET_COLUMNS = [
